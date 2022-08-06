@@ -1,7 +1,7 @@
 from lb.models import Submission, User
 from random import randint
 import functools
-
+import pathlib
 def get_leaderboard():
     """
     Get the current leaderboard
@@ -51,18 +51,18 @@ def get_leaderboard():
     all_submission = Submission.objects.all()
     subs = {}
     for s in all_submission:
-        if s.user_id not in subs or (s.user_id in subs and s.time > subs[s.user_id].time):
-            subs[s.user_id] = s
+        if s.username not in subs or (s.username in subs and s.time > subs[s.username].time):
+            subs[s.username] = s
 
     subs = sorted(subs.values(), key=lambda x: (-x.score, x.time))
     return [
         {
-            "user": obj.user.username,
+            "user": obj.username.username,
             "score": obj.score,
             "subs": [int(x) for x in obj.subs.split()],
             "avatar": obj.avatar,
             "time": obj.time,
-            "votes": obj.user.votes
+            "votes": obj.username.votes
         }
         for obj in subs
     ]
@@ -81,6 +81,45 @@ def judge(content: str):
     #  If `content` is invalid, raise an Exception so that it can be
     #  captured in the view function.
     #  You can define the calculation of main score arbitrarily.
+    submit = []
+    for a in content:
+        if(a == '0'):
+            submit.append(0)
+        if(a == '1'):
+            submit.append(1)
+    # print(submit)
+    subs = [0,0,0]
+    # print(submit)
+    print(len(submit))
 
-    subs = [randint(0, 100) for _ in range(3)]
-    return sum(subs), subs
+    ground_truth_position = pathlib.Path.cwd() /"lb"/ "ground_truth.txt"
+    
+
+    with open(str(ground_truth_position ),"r") as f:
+        
+        all_truth = [w.split(",")[1:] for w in f][1:]
+        standard_answers = [[w[k][0] for w in all_truth]for k in range(3)] 
+    
+    
+    try:
+        if(len(submit) != 3000):
+            print("submit lentgh is ",len(submit))
+            raise
+        for one_answer in submit:
+            if(one_answer != 0 and one_answer != 1):
+                raise
+
+        submits = [[submit[k+j*3] for j in range(1000)]for k in range(3)]
+
+        for i in range(3):
+            
+            std = standard_answers[i]
+            sub = submits[i]
+            correct = len([_ for _ in range(1000) if (std[_] == "T" and sub[_] == 1) or (std[_] == "F" and sub[_] == 0)])
+            subs[i] = correct 
+
+        
+    except:
+        raise ValueError
+    print(subs)
+    return sum(subs)//3, subs

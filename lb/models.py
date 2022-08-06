@@ -12,11 +12,11 @@ class User(models.Model):
 
 class Submission(models.Model):
     id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    username = models.ForeignKey(User, on_delete=models.CASCADE)
     avatar = models.TextField(null=True)
     time = models.FloatField(default=get_time)
     score = models.IntegerField(null=False)
     subs = models.CharField(max_length=255)
 
     class Meta:
-        unique_together = ["user", "time"]
+        unique_together = ["username", "time"]
